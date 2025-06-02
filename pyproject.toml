@@ -1,0 +1,14 @@
+[project]
+name = "inspertorchaudio"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Fabio Ayres", email = "fabioja@insper.edu.br" }
+]
+requires-python = ">=3.13"
+dependencies = []
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
