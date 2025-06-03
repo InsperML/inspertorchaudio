@@ -38,12 +38,12 @@ def _get_mel_spectrogram_transform_params(
     if window_length_secs is not None:
         window_length_samples = int(audio_sample_rate_hz * window_length_secs)
         fft_length_samples = _next_power_of_two(window_length_samples)
-        params['window_length_samples'] = window_length_samples
-        params['fft_length_samples'] = fft_length_samples
+        params['win_length'] = window_length_samples
+        params['n_fft'] = fft_length_samples
 
     if hop_length_secs is not None:
         hop_length_samples = int(audio_sample_rate_hz * hop_length_secs)
-        params['hop_length_samples'] = hop_length_samples
+        params['hop_length'] = hop_length_samples
 
     return params
 
