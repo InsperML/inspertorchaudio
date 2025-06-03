@@ -14,11 +14,11 @@ import torchaudio
 # upper_edge_hz=vggish_params.MEL_MAX_HZ,
 
 
-def next_power_of_two(x):
+def _next_power_of_two(x):
     return 2**int(math.ceil(math.log2(x)))
 
 
-def get_mel_spectrogram_transform_params(
+def _get_mel_spectrogram_transform_params(
     audio_sample_rate_hz: int = 16000,
     window_length_secs: float | None = None,
     hop_length_secs: float | None = None,
@@ -37,7 +37,7 @@ def get_mel_spectrogram_transform_params(
 
     if window_length_secs is not None:
         window_length_samples = int(audio_sample_rate_hz * window_length_secs)
-        fft_length_samples = next_power_of_two(window_length_samples)
+        fft_length_samples = _next_power_of_two(window_length_samples)
         params['window_length_samples'] = window_length_samples
         params['fft_length_samples'] = fft_length_samples
 
@@ -56,7 +56,7 @@ def get_mel_spectrogram_transform(
     lower_edge_hz: float = 0.0,
     upper_edge_hz: float | None = None,
 ):
-    params = get_mel_spectrogram_transform_params(
+    params = _get_mel_spectrogram_transform_params(
         audio_sample_rate_hz=audio_sample_rate_hz,
         window_length_secs=window_length_secs,
         hop_length_secs=hop_length_secs,
