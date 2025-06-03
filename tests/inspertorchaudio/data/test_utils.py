@@ -56,8 +56,11 @@ def test_resampler_no_resampling():
     original_sample_rate = 44100
     target_sample_rate = 44100
 
-    resampled_audio = resampler(audio_tensor, original_sample_rate,
-                                target_sample_rate)
+    resampled_audio = resampler(
+        audio_tensor,
+        original_sample_rate,
+        target_sample_rate,
+    )
 
     assert torch.equal(resampled_audio, audio_tensor)
 
@@ -75,8 +78,7 @@ def test_resampler_with_resampling():
     )
 
     expected_length = int(
-        len(audio_tensor) * target_sample_rate / original_sample_rate
-    )
+        len(audio_tensor) * target_sample_rate / original_sample_rate)
     assert len(resampled_audio) == expected_length
 
     # Check that the resampled audio is a tensor
