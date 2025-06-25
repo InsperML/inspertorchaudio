@@ -63,3 +63,23 @@ It is recommended that you add the ruff extension on vscode.
 We are using `pytest`.
 
 Tests go into the `tests` folder, and they try to mirror the file structure of the `src` folder.
+
+### Logging
+
+As much as it is convenient, try to use the `logging` module of Python (<https://docs.python.org/3/howto/logging.html>).
+
+In a nutshell:
+
+```Python
+import logging
+
+logging.basicConfig(level=logging.DEBUG)
+
+...
+
+# A debug message.
+logging.debug('Hello, world!')
+
+```
+
+More advanced logging can be done, e.g. logging to a file, having multiple loggers, etc. For the time being, lets focus on just simple logging. Proper usage of the logging levels is described in <https://docs.python.org/3/howto/logging.html#when-to-use-logging>
