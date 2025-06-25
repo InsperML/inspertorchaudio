@@ -4,6 +4,12 @@ Common code for audio experiments with PyTorch at Insper
 
 ## Developer
 
+### Coding rules and style
+
+We are mostly following the Google Style Guide for Python (<https://google.github.io/styleguide/pyguide.html>), but we are not using `pylint` anymore, we are switching to `ruff`.
+
+We are writing commit messages in a style inspired by Conventional Commits (<https://www.conventionalcommits.org/en/v1.0.0/>), but not strictly following it: we are sort of playing by ear in this manner.
+
 ### Dependencies and virtual environment
 
 We are using `uv` (<https://docs.astral.sh/uv/>).
