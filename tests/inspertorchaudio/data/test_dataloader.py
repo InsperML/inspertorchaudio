@@ -1,4 +1,3 @@
-# pylint: disable=missing-docstring
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -18,22 +17,21 @@ class ItemSpec:
 
 @pytest.fixture
 def audio_file_test_items():
-
     file_specs = [
         ItemSpec(
-            audio_file_path=Path("test_data", "short_audio.wav"),
+            audio_file_path=Path('test_data', 'short_audio.wav'),
             duration=1.0,
             sample_rate=44100,
             label_index=0,
         ),
         ItemSpec(
-            audio_file_path=Path("test_data", "long_audio.wav"),
+            audio_file_path=Path('test_data', 'long_audio.wav'),
             duration=10.0,
             sample_rate=16000,
             label_index=1,
         ),
         ItemSpec(
-            audio_file_path=Path("test_data", "medium_audio.wav"),
+            audio_file_path=Path('test_data', 'medium_audio.wav'),
             duration=5.0,
             sample_rate=22050,
             label_index=2,
@@ -43,8 +41,9 @@ def audio_file_test_items():
 
 
 def test_audio_file_dataset(audio_file_test_items):  # pylint: disable=redefined-outer-name
-    dataset_items = [(item.audio_file_path, item.label_index)
-                     for item in audio_file_test_items]
+    dataset_items = [
+        (item.audio_file_path, item.label_index) for item in audio_file_test_items
+    ]
 
     mock_file_specs = {
         item.audio_file_path: (item.duration, item.sample_rate)
@@ -68,9 +67,7 @@ def test_audio_file_dataset(audio_file_test_items):  # pylint: disable=redefined
         target_sample_rate: int,
     ) -> torch.Tensor:
         num_samples_original = audio_tensor.size(0)
-        num_samples_target = int( \
-            num_samples_original * target_sample_rate / sample_rate \
-        )
+        num_samples_target = int(num_samples_original * target_sample_rate / sample_rate)
         # Mock resampling by returning a tensor of zeros
         # with the target sample rate.
         return torch.zeros(num_samples_target)

@@ -1,4 +1,3 @@
-# pylint: disable=missing-docstring
 from pathlib import Path
 
 import soundfile as sf

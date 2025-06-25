@@ -1,4 +1,3 @@
-# pylint: disable=missing-docstring
 from collections.abc import Callable
 from pathlib import Path
 
