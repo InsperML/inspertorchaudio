@@ -57,3 +57,9 @@ It is recommended that you add the ruff extension on vscode.
 - Formatting: `ruff format`
 
 - Linting: `ruff check`
+
+### Unit tests
+
+We are using `pytest`.
+
+Tests go into the `tests` folder, and they try to mirror the file structure of the `src` folder.
