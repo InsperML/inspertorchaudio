@@ -1,16 +1,8 @@
+import logging
 import math
 
 import torch
-import torch.nn
 import torchaudio
-
-# from . import vggish_params
-# audio_sample_rate_hz=vggish_params.SAMPLE_RATE,
-# window_length_secs=vggish_params.STFT_WINDOW_LENGTH_SECONDS,
-# hop_length_secs=vggish_params.STFT_HOP_LENGTH_SECONDS,
-# num_mel_bins=vggish_params.NUM_MEL_BINS,
-# lower_edge_hz=vggish_params.MEL_MIN_HZ,
-# upper_edge_hz=vggish_params.MEL_MAX_HZ,
 
 
 def _next_power_of_two(x):
@@ -72,28 +64,36 @@ def frame(data, window_length, hop_length):
     num_frames = 1 + (num_samples - window_length) // hop_length
     max_frames = num_frames * hop_length
 
-    data = data[..., :max_frames]  # Truncate to fit
+    # Truncate to fit.
+    data = data[..., :max_frames]
 
+    # Add batch dimension if missing.
     if data.ndim == 2:
-        data = data.unsqueeze(0)  # Add batch dimension if missing
+        data = data.unsqueeze(0)
 
     data_ = []
-    print('Stacking')
-    print(data.shape)
+
+    logging.debug('Stacking')
+    logging.debug(data.shape)
+
     for i in range(num_frames):
         start = i * hop_length
         end = start + window_length
         if end > num_samples:
             break
         data_.append(data[:, :, start:end])
-    print(
-        'Data to stack:',
+
+    logging.debug(
+        'Data to stack: %s, shape: %s, num_frames: %d, window_length: %d, hop_length: %d',
         data_[0].shape,
         len(data_),
         num_frames,
         window_length,
         hop_length,
     )
-    data = torch.stack(data_, dim=1)  # Stack frames along the second dimension
-    print(data.shape)
+
+    data = torch.stack(data_, dim=1)  # Stack frames along the second dimension.
+
+    logging.debug('Stacked data shape: %s', data.shape)
+
     return data
