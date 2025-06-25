@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 
 import soundfile as sf
@@ -9,7 +10,7 @@ def file_loader(file_path: Path) -> tuple[torch.Tensor, int] | None:
     try:
         data, sample_rate = sf.read(file_path)
     except sf.LibsndfileError as e:
-        print(f'Error reading file {file_path}: {e}')
+        logging.error('Error reading file %s: %s', file_path, e)
         return None
     return torch.from_numpy(data).float(), sample_rate
 
