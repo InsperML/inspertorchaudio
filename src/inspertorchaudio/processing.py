@@ -1,4 +1,3 @@
-# pylint: disable=missing-docstring
 import math
 
 import torch
@@ -15,7 +14,7 @@ import torchaudio
 
 
 def _next_power_of_two(x):
-    return 2**int(math.ceil(math.log2(x)))
+    return 2 ** int(math.ceil(math.log2(x)))
 
 
 def _get_mel_spectrogram_transform_params(
@@ -79,7 +78,7 @@ def frame(data, window_length, hop_length):
         data = data.unsqueeze(0)  # Add batch dimension if missing
 
     data_ = []
-    print("Stacking")
+    print('Stacking')
     print(data.shape)
     for i in range(num_frames):
         start = i * hop_length
@@ -87,8 +86,14 @@ def frame(data, window_length, hop_length):
         if end > num_samples:
             break
         data_.append(data[:, :, start:end])
-    print("Data to stack:", data_[0].shape, len(data_), num_frames,
-          window_length, hop_length)
+    print(
+        'Data to stack:',
+        data_[0].shape,
+        len(data_),
+        num_frames,
+        window_length,
+        hop_length,
+    )
     data = torch.stack(data_, dim=1)  # Stack frames along the second dimension
     print(data.shape)
     return data
