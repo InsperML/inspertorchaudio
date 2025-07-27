@@ -16,7 +16,7 @@ class ItemSpec:
 
 
 @pytest.fixture
-def audio_file_test_items():
+def audio_file_test_items() -> list[ItemSpec]:
     file_specs = [
         ItemSpec(
             audio_file_path=Path('test_data', 'short_audio.wav'),
@@ -40,7 +40,7 @@ def audio_file_test_items():
     return file_specs
 
 
-def test_audio_file_dataset(audio_file_test_items):  # pylint: disable=redefined-outer-name
+def test_audio_file_dataset(audio_file_test_items):
     dataset_items = [
         (item.audio_file_path, item.label_index) for item in audio_file_test_items
     ]
@@ -50,7 +50,7 @@ def test_audio_file_dataset(audio_file_test_items):  # pylint: disable=redefined
         for item in audio_file_test_items
     }
 
-    def mock_file_loader(file_path: Path) -> tuple[torch.Tensor, int]:
+    def mock_file_loader(file_path: Path) -> tuple[torch.Tensor, int] | None:
         # Mock loading audio files by returning a tensor of zeros
         # and the sample rate specified in the test items.
         result = mock_file_specs.get(file_path)
