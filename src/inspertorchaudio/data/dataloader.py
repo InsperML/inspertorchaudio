@@ -29,7 +29,11 @@ class AudioFileDataset(Dataset):
     def __getitem__(self, index: int) -> tuple[torch.Tensor, int]:
         file_path, label_index = self.dataset_items[index]
 
-        audio_tensor, sample_rate = self.file_loader(file_path)
+        result = self.file_loader(file_path)
+        if result is None:
+            raise ValueError(f'Failed to load audio file: {file_path}')
+        
+        audio_tensor, sample_rate = result
         if audio_tensor is None:
             raise ValueError(f'Failed to load audio file: {file_path}')
 
