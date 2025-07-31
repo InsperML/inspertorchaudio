@@ -16,7 +16,7 @@ def _get_mel_spectrogram_transform_params(
     num_mel_bins: int = 128,
     lower_edge_hz: float = 0.0,
     upper_edge_hz: float | None = None,
-):
+) -> dict[str, float | str | None]:
     params = dict(
         sample_rate=audio_sample_rate_hz,
         n_mels=num_mel_bins,
@@ -55,7 +55,7 @@ def get_mel_spectrogram_transform(
         lower_edge_hz=lower_edge_hz,
         upper_edge_hz=upper_edge_hz,
     )
-    melspectrogram = torchaudio.transforms.MelSpectrogram(**params)
+    melspectrogram = torchaudio.transforms.MelSpectrogram(**params)  # type: ignore
     return melspectrogram
 
 
