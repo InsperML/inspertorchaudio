@@ -21,6 +21,8 @@ def test_download_file():
     assert target_path.exists()
 
 def test_download_fma_metadata():
-    download_dataset("fma_metadata", force_download=False)
+    path = download_dataset("fma_metadata", force_download=False)
     assert (Path(os.getenv("DATA_DIR")).expanduser() / "fma_metadata" / "fma_metadata.zip").exists()
+    assert path.exists()
+    assert isinstance(path, Path)
 

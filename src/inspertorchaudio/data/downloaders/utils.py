@@ -42,7 +42,7 @@ def unzip_file(zip_path: str | Path, extract_to: str | Path) -> None:
         print(f"Extracted {zip_path} to {extract_to}")
 
 
-def download_dataset(dataset_tag : str, force_download: bool = False) -> bool:
+def download_dataset(dataset_tag : str, force_download: bool = False) -> Path | None:
     """
     Downloads a dataset file.
     """
@@ -68,11 +68,12 @@ def download_dataset(dataset_tag : str, force_download: bool = False) -> bool:
 
     if target_path.exists() and not force_download:
         print(f"File {target_path} already exists. Skipping download.")
-        return True
+        return target_path
 
     try:
         download_file(url, target_path)
-        return True
+        return target_path
     except Exception as e:
         print(f"Failed to download at {url} or extract file {filename} for dataset {dataset_tag}: {e}")
-        return False
+        return None
+    
