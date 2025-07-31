@@ -5,3 +5,17 @@ local_dir = "fma_metadata"
 [fma_small]
 url = "https://os.unil.cloud.switch.ch/fma/fma_small.zip"
 local_dir = "fma_small"
+
+[fma_medium]
+url = "https://os.unil.cloud.switch.ch/fma/fma_medium.zip"
+local_dir = "fma_medium"
+
+[fma_large]
+url = "https://os.unil.cloud.switch.ch/fma/fma_large.zip"
+local_dir = "fma_large"
+
+[fma_full]
+url = "https://os.unil.cloud.switch.ch/fma/fma_full.zip"
+local_dir = "fma_full"
+
+
