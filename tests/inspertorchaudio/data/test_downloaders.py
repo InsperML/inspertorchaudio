@@ -16,7 +16,7 @@ def test_download_file():
         raise RuntimeError('DATA_DIR environment variable is not set')
 
     download_dir = Path(data_dir_str).expanduser()
-    target_path = download_dir / 'test/README.md'
+    target_path = download_dir / 'test' / 'README.md'
 
     target_url = 'https://raw.githubusercontent.com/InsperML/inspertorchaudio/refs/heads/main/README.md'
 
