@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from inspertorchaudio.data.downloaders.utils import download_file
+from inspertorchaudio.data.downloaders.utils import download_file, unzip_file, download_dataset
 import dotenv
 import os
 
@@ -19,4 +19,8 @@ def test_download_file():
 
     # Check if the file was created
     assert target_path.exists()
+
+def test_download_fma_metadata():
+    download_dataset("fma_metadata", force_download=False)
+    assert (Path(os.getenv("DATA_DIR")).expanduser() / "fma_metadata" / "fma_metadata.zip").exists()
 

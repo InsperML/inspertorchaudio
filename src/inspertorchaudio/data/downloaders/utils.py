@@ -1,5 +1,11 @@
-import requests
+import os
+import zipfile
+from importlib.resources import files
 from pathlib import Path
+
+import dotenv
+import requests
+import toml
 from tqdm import tqdm
 
 
@@ -29,4 +35,44 @@ def download_file(target_url: str, target_path: str | Path) -> None:
             if chunk:
                 f.write(chunk)
                 pbar.update(len(chunk))
+                
+def unzip_file(zip_path: str | Path, extract_to: str | Path) -> None:
+    with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+        zip_ref.extractall(extract_to)
+        print(f"Extracted {zip_path} to {extract_to}")
 
+
+def download_dataset(dataset_tag : str, force_download: bool = False) -> bool:
+    """
+    Downloads a dataset file.
+    """
+    resource_path = files("inspertorchaudio.resources")
+    config_filename = Path("datasets.toml")
+    resource_path = resource_path / config_filename
+
+    with resource_path.open("r") as f:
+        data = toml.load(f)
+    
+    if dataset_tag not in data:
+        raise ValueError(f"Dataset {dataset_tag} not found in configuration file.")
+    
+    url = data[dataset_tag]['url']
+    filename = url.split("/")[-1]
+    
+    dotenv.load_dotenv()
+    download_dir = Path(os.getenv("DATA_DIR")).expanduser()
+    local_dir = data[dataset_tag]['local_dir']
+    
+    
+    target_path = download_dir / local_dir / filename
+
+    if target_path.exists() and not force_download:
+        print(f"File {target_path} already exists. Skipping download.")
+        return True
+
+    try:
+        download_file(url, target_path)
+        return True
+    except Exception as e:
+        print(f"Failed to download at {url} or extract file {filename} for dataset {dataset_tag}: {e}")
+        return False

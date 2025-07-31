@@ -1,0 +1,7 @@
+[fma_metadata]
+url = "https://os.unil.cloud.switch.ch/fma/fma_metadata.zip"
+local_dir = "fma_metadata"
+
+[fma_small]
+url = "https://os.unil.cloud.switch.ch/fma/fma_small.zip"
+local_dir = "fma_small"

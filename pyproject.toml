@@ -12,6 +12,7 @@ dependencies = [
     "requests>=2.32.4",
     "resampy>=0.4.3",
     "soundfile>=0.13.1",
+    "toml>=0.10.2",
     "torch>=2.7.1",
     "torchaudio>=2.7.1",
     "tqdm>=4.67.1",
@@ -27,8 +28,8 @@ dev = [
     "ruff>=0.12.5",
 ]
 
-[tool.inspertorchaudio]
-assets-dir = "assets"
+[tool.setuptools.package-data]
+"inspertorchaudio" = ["resources/*"]
 
 [tool.ruff]
 line-length = 90
