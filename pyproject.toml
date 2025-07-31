@@ -8,10 +8,13 @@ authors = [
 ]
 requires-python = ">=3.12"
 dependencies = [
+    "python-dotenv>=1.1.1",
+    "requests>=2.32.4",
     "resampy>=0.4.3",
     "soundfile>=0.13.1",
     "torch>=2.7.1",
     "torchaudio>=2.7.1",
+    "tqdm>=4.67.1",
 ]
 
 [build-system]
@@ -23,6 +26,9 @@ dev = [
     "pytest>=8.4.1",
     "ruff>=0.12.5",
 ]
+
+[tool.inspertorchaudio]
+assets-dir = "assets"
 
 [tool.ruff]
 line-length = 90
