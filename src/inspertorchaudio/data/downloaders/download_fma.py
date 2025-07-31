@@ -1,5 +1,5 @@
+import importlib.resources
 import os
-from importlib.resources import files, path
 from pathlib import Path
 
 import dotenv
@@ -14,18 +14,20 @@ def get_fma_metadata_index(force_download: bool = False) -> None:
     Downloads the FMA metadata zip file and extracts it to the specified directory.
     Returns a path to tracks.csv, which is the index file for the FMA dataset.
     """
-    resource_path = files('inspertorchaudio.resources')
-    config_filename = Path('datasets.toml')
-    resource_path = resource_path / config_filename
-
-    with resource_path.open('r') as f:
-        data = toml.load(f)
+    data = toml.loads(
+        importlib.resources.files('inspertorchaudio.resources')
+        .joinpath('datasets.toml')
+        .read_text()
+    )
 
     dotenv.load_dotenv()
-    download_dir = Path(os.getenv('DATA_DIR')).expanduser()
+    data_dir_str = os.getenv('DATA_DIR')
+    if not data_dir_str:
+        raise RuntimeError('DATA_DIR environment variable is not set')
+    download_dir = Path(data_dir_str).expanduser()
     local_dir = data['fma_metadata']['local_dir']
-
     target_file = download_dir / local_dir / 'fma_metadata' / 'tracks.csv'
+
     if not target_file.exists() or force_download:
         zip_file = download_dataset('fma_metadata', force_download=force_download)
         if zip_file is None:
