@@ -9,6 +9,24 @@ import toml
 from tqdm import tqdm
 
 
+def get_download_datadir() -> Path:
+    """
+    Returns the path to the data directory where datasets are downloaded.
+    Raises an error if the DATA_DIR environment variable is not set.
+    """
+    dotenv.load_dotenv()
+    data_dir_str = os.getenv('DATA_DIR')
+    if not data_dir_str:
+        raise RuntimeError('DATA_DIR environment variable is not set')
+    return Path(data_dir_str).expanduser()
+
+def get_resources() -> dict:
+    return toml.loads(
+        importlib.resources.files('inspertorchaudio.resources')
+        .joinpath('datasets.toml')
+        .read_text()
+    )
+
 def download_file(target_url: str, target_path: str | Path) -> None:
     # Ensure the target directory exists
     Path(target_path).parent.mkdir(parents=True, exist_ok=True)

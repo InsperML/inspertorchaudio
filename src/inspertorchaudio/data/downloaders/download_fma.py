@@ -6,6 +6,28 @@ import pandas as pd
 from .utils import (download_dataset, get_download_datadir, get_resources,
                     unzip_file)
 
+def download_fma_small(force_download: bool = False) -> Path | None:
+    """
+    Downloads the FMA small dataset zip file and extracts it to the specified directory.
+    Returns a path to the extracted directory.
+    """
+    download_dir = get_download_datadir()
+    data = get_resources()
+    local_dir = data['fma_small']['local_dir']
+    target_file = download_dir / local_dir / 'fma_small.zip'
+
+    if not target_file.exists() or force_download:
+        zip_file = download_dataset('fma_small', force_download=force_download)
+        if zip_file is None:
+            raise RuntimeError('Failed to download the FMA small zip file.')
+        unzip_file(zip_file, zip_file.parent)
+
+    if not target_file.exists():
+        raise FileNotFoundError(
+            f'Expected file {target_file} not found after extraction.'
+        )
+
+    return target_file.parent
 
 def get_fma_metadata_index(force_download: bool = False) -> None:
     """
