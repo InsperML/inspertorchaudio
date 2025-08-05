@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 import torch
 
-from inspertorchaudio.data.dataloader import AudioFileDataset
+from inspertorchaudio.data.audio_dataset import AudioFileDataset
 
 
 @dataclass

@@ -63,6 +63,8 @@ def preprocess_fma_index(target_file: Path | str) -> pd.DataFrame:
     split = df[('set', 'split', 'Unnamed: 31_level_2')]
     subset = df[('set', 'subset', 'Unnamed: 32_level_2')]
     genre = df[('track', 'genre_top', 'Unnamed: 40_level_2')]
+    filename = track_id.apply(lambda x : f'{x:06d}.mp3')
+    path = filename.apply(lambda x: x[0:3] + "/" + x)
 
     meta_df = pd.DataFrame(
         {
@@ -70,6 +72,8 @@ def preprocess_fma_index(target_file: Path | str) -> pd.DataFrame:
             'split': split,
             'subset': subset,
             'genre': genre,
+            'filename': filename,
+            'path': path,
         }
     )
 

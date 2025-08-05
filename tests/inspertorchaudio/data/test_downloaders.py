@@ -33,3 +33,5 @@ def test_download_fma_metadata(download_dir: Path) -> None:
 
     target_path = download_dir / 'fma_metadata' / 'fma_metadata.zip'
     assert target_path.exists()
+
+
