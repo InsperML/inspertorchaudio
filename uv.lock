@@ -164,6 +164,45 @@ wheels = [
 ]
 
 [[package]]
+name = "audeer"
+version = "2.2.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "tqdm" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/48/71/5a79655e2424515db7395d1eeae9fed6580e83f40ad6fa9cbe1354a4c554/audeer-2.2.2.tar.gz", hash = "sha256:bc668a696af1ea7f7e1e23d5a1788867e482c42bdb6a3ae9bbc0251faa6719c5", size = 45298, upload-time = "2025-06-06T08:55:53.021Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/b8/fb/d4c5c6ad8b4cac85f1d11472fd2d5fef17c723fff1be483efd012550373f/audeer-2.2.2-py3-none-any.whl", hash = "sha256:0bbbde565ba1f3717ec4dc5863061e977cea06fd62e1c85c589331c136ebf3d7", size = 41800, upload-time = "2025-06-06T08:55:51.456Z" },
+]
+
+[[package]]
+name = "audiofile"
+version = "1.5.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "audeer" },
+    { name = "audmath" },
+    { name = "numpy" },
+    { name = "soundfile" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/f5/a2/0eef4548cfa95982f372074feb0409082d8a76af8c98f73a89be8adfdcfd/audiofile-1.5.1.tar.gz", hash = "sha256:2a300a6c48841be2ac706437e30bd59babe116a68fa1788209a7d3be42251b47", size = 1134862, upload-time = "2025-01-03T10:47:59.957Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/83/5d/5decc1abb5b587b6224a17992d4b27b870b8640d7b5af31f03f87c3b187b/audiofile-1.5.1-py3-none-any.whl", hash = "sha256:c4282f5d8301c244723695c57b608c94e4051e5fb8529f8b8bc3ee048c044468", size = 1140817, upload-time = "2025-01-03T10:47:56.54Z" },
+]
+
+[[package]]
+name = "audmath"
+version = "1.4.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "numpy" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/5b/83/0323783e7bacd0eba6e6ed2130a8527d609c9624c0021c76f0954e72ebc9/audmath-1.4.2.tar.gz", hash = "sha256:1a8250de82c2639da1fcbe58fd94619066e671f27c5f446b5fa76d13edfd45cc", size = 24502, upload-time = "2025-06-11T14:15:53.848Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/de/59/a8a748f6d283fad71bcade23869ba23cfda93f06a9790fbe7d0412f72ee6/audmath-1.4.2-py3-none-any.whl", hash = "sha256:4974cbe77b1e92fb6d4b3789ae40d76382e2134832ba54d4cb205281d17de0f2", size = 23095, upload-time = "2025-06-11T14:15:52.26Z" },
+]
+
+[[package]]
 name = "babel"
 version = "2.17.0"
 source = { registry = "https://pypi.org/simple" }
@@ -765,6 +804,7 @@ name = "inspertorchaudio"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
+    { name = "audiofile" },
     { name = "mlflow" },
     { name = "pandas" },
     { name = "python-dotenv" },
@@ -789,6 +829,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "audiofile", specifier = ">=1.5.1" },
     { name = "mlflow", specifier = ">=3.2.0" },
     { name = "pandas", specifier = ">=2.3.1" },
     { name = "python-dotenv", specifier = ">=1.1.1" },
