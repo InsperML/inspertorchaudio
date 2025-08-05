@@ -3,6 +3,7 @@ from pathlib import Path
 import audiofile
 
 import torch
+import torch.nn.functional as Fnn
 import torchaudio
 import torchaudio.functional as F
 
@@ -34,7 +35,12 @@ def resample_and_resize(
         if audio_tensor.size(0) < target_length:
             # Pad with zeros if shorter than target length
             padding = target_length - audio_tensor.size(0)
-            audio_tensor = F.pad(audio_tensor, (0, padding))
+            audio_tensor = Fnn.pad(
+                audio_tensor,
+                (0, padding),
+                mode='constant',
+                value=0,
+            )
         else:
             # Trim to target length if longer
             audio_tensor = audio_tensor[:target_length]
@@ -54,9 +60,8 @@ def load_sample_and_to_mono(
     n_samples_to_load = int(length_seconds * sample_rate)
 
     if n_samples_to_load > n_samples:
-        raise ValueError(
-            f'length_seconds {length_seconds} is too long for file {file_path} with {n_samples} samples.'
-        )
+        n_samples_to_load = n_samples
+
     start_sample = torch.randint(0, n_samples - n_samples_to_load + 1, (1,)).item()
 
     try:
