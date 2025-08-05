@@ -4,6 +4,44 @@ Common code for audio experiments with PyTorch at Insper
 
 ## Developer
 
+### Onboarding
+
+#### 0. Install the `uv` package management tool:
+
+  pip install uv
+
+(or: browse to the [Astral website](https://docs.astral.sh/uv/getting-started/installation) and choose another installation method)
+
+#### 1. Clone the repository:
+
+  git clone git@github.com:InsperML/inspertorchaudio.git
+
+#### 2. Syncronize and activate the environment
+
+  cd inspertorchaudio
+  uv sync
+  source .venv/bin/activate
+
+
+#### 3. Configure .env
+
+  cp .env_template .env
+
+After that, change the value of `DATA_DIR` to `"/mnt/data/inspertorchaudio/"` (or your favourite data location).
+
+Optionally, just create a new `.env` file:
+
+  echo DATA_DIR = "/mnt/data/inspertorchaudio/" > .env
+
+#### 4. Tun tests to make sure everything works
+
+  pytest -s
+
+Everything should work.
+
+If it is the first time you are using the data directory, some small datasets will automatically be downloaded. This should take between one and ninety minutes, depending on your connection speed.
+
+
 ### Coding rules and style
 
 We are mostly following the Google Style Guide for Python (<https://google.github.io/styleguide/pyguide.html>), but we are not using `pylint` anymore, we are switching to `ruff`.
