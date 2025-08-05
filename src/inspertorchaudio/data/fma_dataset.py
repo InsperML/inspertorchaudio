@@ -6,6 +6,7 @@ import torch
 import torch.nn.functional as Fnn
 import torchaudio
 import torchaudio.functional as F
+from sklearn.preprocessing import LabelEncoder
 
 from .audio_dataset import AudioFileDataset
 from .downloaders.download_fma import (
