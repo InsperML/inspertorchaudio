@@ -1,6 +1,6 @@
+import importlib.resources
 import os
 import zipfile
-import importlib.resources
 from pathlib import Path
 
 import dotenv
@@ -20,12 +20,14 @@ def get_download_datadir() -> Path:
         raise RuntimeError('DATA_DIR environment variable is not set')
     return Path(data_dir_str).expanduser()
 
+
 def get_resources() -> dict:
     return toml.loads(
         importlib.resources.files('inspertorchaudio.resources')
         .joinpath('datasets.toml')
         .read_text()
     )
+
 
 def download_file(target_url: str, target_path: str | Path) -> None:
     # Ensure the target directory exists
