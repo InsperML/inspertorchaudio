@@ -2,6 +2,10 @@
 
 Common code for audio experiments with PyTorch at Insper
 
+## Datasets
+
+Check the [datasets page](docs/datasets.md).
+
 ## Developer
 
 ### Onboarding
