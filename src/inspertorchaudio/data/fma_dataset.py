@@ -13,70 +13,9 @@ from .downloaders.download_fma import (
     get_fma_metadata_index,
     preprocess_fma_index,
 )
+from .utils import load_sample_and_to_mono, resample_and_resize
 from .downloaders.utils import get_download_datadir, get_resources
 from sklearn.preprocessing import LabelEncoder
-
-
-def resample_and_resize(
-    audio_tensor: torch.Tensor,
-    original_sample_rate: int,
-    target_sample_rate: int,
-    target_length_seconds: float,
-    lowpass_filter_width: int = 6,
-) -> torch.Tensor:
-    F.resample(
-        audio_tensor,
-        orig_freq=original_sample_rate,
-        new_freq=target_sample_rate,
-        lowpass_filter_width=lowpass_filter_width,
-    )
-    target_length = int(target_length_seconds * target_sample_rate)
-    if target_length is not None:
-        if audio_tensor.size(0) < target_length:
-            # Pad with zeros if shorter than target length
-            padding = target_length - audio_tensor.size(0)
-            audio_tensor = Fnn.pad(
-                audio_tensor,
-                (0, padding),
-                mode='constant',
-                value=0,
-            )
-        else:
-            # Trim to target length if longer
-            audio_tensor = audio_tensor[:target_length]
-    return audio_tensor
-
-
-def load_sample_and_to_mono(
-    file_path: Path,
-    length_seconds: float,
-) -> tuple[torch.Tensor, int] | None:
-    # Sample a random part of the audio file
-    if length_seconds <= 0:
-        raise ValueError('length_seconds must be positive.')
-
-    n_samples = audiofile.samples(file_path)
-    sample_rate = audiofile.sampling_rate(file_path)
-    n_samples_to_load = int(length_seconds * sample_rate)
-
-    if n_samples_to_load > n_samples:
-        n_samples_to_load = n_samples
-
-    start_sample = torch.randint(0, n_samples - n_samples_to_load + 1, (1,)).item()
-
-    try:
-        waveform, sample_rate = torchaudio.load(
-            file_path,
-            frame_offset=start_sample,
-            num_frames=n_samples_to_load,
-        )
-        if waveform.size(0) > 1:
-            waveform = torch.mean(waveform, dim=0, keepdim=True)
-        return waveform.squeeze(0), sample_rate
-
-    except Exception as e:
-        print(f'Error loading {file_path}: {e}')
-        return None
 
 
 def get_fma_small_dataset(
