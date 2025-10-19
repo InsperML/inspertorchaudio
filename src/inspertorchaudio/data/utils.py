@@ -1,9 +1,118 @@
 import logging
 from pathlib import Path
 
+import audiofile
 import soundfile as sf
 import torch
-from torch.nn import functional as F
+import torch.nn.functional as Fnn
+import torchaudio.functional as F
+import torchaudio
+
+class AudioLoader:
+    # Utility class to load and preprocess audio files
+    
+    def __init__(
+        self,
+        target_length_seconds: float = 3.0,
+        target_sample_rate: int | None = None,
+        normalize: bool = True,
+        mono: bool = True,
+        lowpass_filter_width: int = 6,
+    ):
+        self.target_sample_rate = target_sample_rate
+        self.normalize = normalize
+        self.mono = mono
+        self.target_length_seconds = target_length_seconds
+        self.lowpass_filter_width = lowpass_filter_width
+
+    def __call__(self, file_path: Path) -> tuple[torch.Tensor, int] | None:
+        audio_tensor, sample_rate = load_sample_and_to_mono(
+            file_path,
+            length_seconds=self.target_length_seconds,
+            to_mono=self.mono,
+        )
+        
+        if audio_tensor is None:
+            raise ValueError(f'Failed to load audio file: {file_path}')
+
+        if self.target_sample_rate is not None:
+            F.resample(
+                audio_tensor,
+                orig_freq=sample_rate,
+                new_freq=self.target_sample_rate,
+                lowpass_filter_width=self.lowpass_filter_width,
+            )
+            sample_rate = self.target_sample_rate
+            
+        if self.target_length_seconds is not None:            
+            audio_tensor = resize(
+                audio_tensor,
+                sample_rate=self.target_sample_rate,
+                target_length_seconds=self.target_length_seconds,
+            )
+
+        if self.normalize:
+            audio_tensor = (audio_tensor - audio_tensor.mean()) / (
+                audio_tensor.std() + 1e-9
+            )
+
+        return audio_tensor, sample_rate
+
+
+def resize(
+    audio_tensor: torch.Tensor,
+    sample_rate: int,
+    target_length_seconds: float,
+) -> torch.Tensor:
+    
+    target_length = int(target_length_seconds * sample_rate)
+    if target_length is not None:
+        if audio_tensor.size(0) < target_length:
+            # Pad with zeros if shorter than target length
+            padding = target_length - audio_tensor.size(0)
+            audio_tensor = Fnn.pad(
+                audio_tensor,
+                (0, padding),
+                mode='constant',
+                value=0,
+            )
+        else:
+            # Trim to target length if longer
+            audio_tensor = audio_tensor[:target_length]
+    return audio_tensor
+
+
+def load_sample_and_to_mono(
+    file_path: Path,
+    length_seconds: float,
+    to_mono: bool = True,
+) -> tuple[torch.Tensor, int] | None:
+    # Sample a random part of the audio file
+    if length_seconds <= 0:
+        raise ValueError('length_seconds must be positive.')
+
+    n_samples = audiofile.samples(file_path)
+    sample_rate = audiofile.sampling_rate(file_path)
+    n_samples_to_load = int(length_seconds * sample_rate)
+
+    if n_samples_to_load > n_samples:
+        n_samples_to_load = n_samples
+
+    start_sample = torch.randint(0, n_samples - n_samples_to_load + 1, (1,)).item()
+
+    try:
+        waveform, sample_rate = torchaudio.load(
+            file_path,
+            frame_offset=start_sample,
+            num_frames=n_samples_to_load,
+        )
+        if to_mono and waveform.size(0) > 1:
+            waveform = torch.mean(waveform, dim=0, keepdim=True)
+        return waveform.squeeze(0), sample_rate
+
+    except Exception as e:
+        print(f'Error loading {file_path}: {e}')
+        return None
 
 
 def file_loader(file_path: Path) -> tuple[torch.Tensor, int] | None:
@@ -15,25 +124,3 @@ def file_loader(file_path: Path) -> tuple[torch.Tensor, int] | None:
     return torch.from_numpy(data).float(), sample_rate
 
 
-def resampler(
-    audio_tensor: torch.Tensor,
-    original_sample_rate: int,
-    target_sample_rate: int,
-) -> torch.Tensor:
-    if original_sample_rate == target_sample_rate:
-        return audio_tensor
-
-    num_samples_original = audio_tensor.size(0)
-    num_samples_target = int(
-        num_samples_original * target_sample_rate / original_sample_rate
-    )
-
-    # Resample the audio tensor using linear interpolation
-    resampled_audio = F.interpolate(
-        audio_tensor.view(1, 1, -1),  # Add batch and channel dimensions
-        size=num_samples_target,
-        mode='linear',
-        align_corners=False,
-    ).view(-1)  # Remove batch and channel dimensions
-
-    return resampled_audio
