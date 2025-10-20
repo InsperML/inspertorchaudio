@@ -23,6 +23,7 @@ dependencies = [
     "tqdm>=4.67.1",
     "transformers>=4.57.1",
     "typer>=0.16.0",
+    "webdataset>=1.0.2",
 ]
 
 [build-system]

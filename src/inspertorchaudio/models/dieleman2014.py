@@ -119,7 +119,7 @@ class DielemanClassifier(nn.Module):
             x (torch.Tensor): Input from the CNN model. Dimensions: batch x time x n_features_out
 
         Returns:
-            torch.Tensor: Output of the classifier. Dimensions: batch x time x n_features_out
+            torch.Tensor: Output of the classifier. Dimensions: batch x classes
         """
         x = self.backbone(x)
         if self.time_summarizer is not None:
