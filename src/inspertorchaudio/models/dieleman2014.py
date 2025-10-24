@@ -81,13 +81,13 @@ class Dieleman2014(nn.Module):
             x = torch.log(1 + self.compression_factor * x)
 
         # Apply convolutional layers with max pooling
-        x = F.relu(self.conv1(x))
+        x = F.leaky_relu(self.conv1(x), negative_slope=0.01)
         x = self.maxpool1(x)
-        x = F.relu(self.conv2(x))
+        x = F.leaky_relu(self.conv2(x), negative_slope=0.01)
         x = self.maxpool2(x)
         x = x.transpose(1, 2)
         x = self.fc1(x)
-        x = F.relu(x)
+        x = F.leaky_relu(x, negative_slope=0.01)
         x = self.fc2(x)
 
         return x
