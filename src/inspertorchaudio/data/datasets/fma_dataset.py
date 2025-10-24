@@ -70,7 +70,12 @@ def fma_dataset(
     check_dataset_files:  bool = False,
 ):
     df = load_and_preprocess_tracks_csv(tracks_csv_full_path)
-    df = df[df['subset'] == subset]
+    all_subsets = {
+        'small' : ['small'],
+        'medium' : ['medium', 'small'],
+        'large' : ['large', 'medium', 'small'],
+    }[subset]
+    df = df[df['subset'].isin(all_subsets)]
     
     blacklist_filter = ~df.index.astype(str).isin(BLACKLIST)
     df = df[blacklist_filter]

@@ -14,6 +14,11 @@ import torch.nn.functional as F
 import torchaudio
 
 
+def _print_if_debug(x, debug: bool = False):
+    if debug:
+        print(x.shape)
+
+
 class Dieleman2014(nn.Module):
     """
     Baseline CNN model for audio classification.
@@ -29,11 +34,11 @@ class Dieleman2014(nn.Module):
         n_fft: int = 1024,
         win_length: int = 256,
         hop_length: int = 256,
-        f_min: float = 0.0,
-        f_max: float = None,
+        f_min: float = 10.0,
+        f_max: float = 8000,
         n_mels: int = 128,
         power: float = 1.0,
-        compression_factor: float | None = 10000,
+        compression_factor: float = 1.0,
         n_features_out: int = 100,
     ):
         super().__init__()
@@ -47,7 +52,12 @@ class Dieleman2014(nn.Module):
             n_mels=n_mels,
             power=power,
         )
-        self.compression_factor = compression_factor
+        self.compression_factor_tau = (
+            nn.Parameter(torch.tensor(compression_factor))
+            if compression_factor is not None
+            else None
+        )
+
         self.conv1 = nn.Conv1d(
             in_channels=n_mels,
             out_channels=32,
@@ -63,7 +73,7 @@ class Dieleman2014(nn.Module):
         self.fc1 = nn.Linear(32, 50)
         self.fc2 = nn.Linear(50, n_features_out)
 
-    def forward(self, x):
+    def forward(self, x, debug=False):
         """
         Forward pass of the CNN model.
 
@@ -76,19 +86,27 @@ class Dieleman2014(nn.Module):
 
         # Apply mel spectrogram transformation
         x = self.melspectrogram(x)
+        _print_if_debug(x, debug)
 
-        if self.compression_factor is not None:
-            x = torch.log(1 + self.compression_factor * x)
+        if self.compression_factor_tau is not None:
+            x = torch.log(1 + torch.exp(self.compression_factor_tau) * x)
 
         # Apply convolutional layers with max pooling
         x = F.leaky_relu(self.conv1(x), negative_slope=0.01)
+        _print_if_debug(x, debug)
         x = self.maxpool1(x)
+        _print_if_debug(x, debug)
         x = F.leaky_relu(self.conv2(x), negative_slope=0.01)
+        _print_if_debug(x, debug)
         x = self.maxpool2(x)
+        _print_if_debug(x, debug)
         x = x.transpose(1, 2)
+        _print_if_debug(x, debug)
         x = self.fc1(x)
+        _print_if_debug(x, debug)
         x = F.leaky_relu(x, negative_slope=0.01)
         x = self.fc2(x)
+        _print_if_debug(x, debug)
 
         return x
 
@@ -111,7 +129,7 @@ class DielemanClassifier(nn.Module):
         embedding_dimension = backbone.fc2.out_features
         self.fc = nn.Linear(embedding_dimension, n_classes)
 
-    def forward(self, x):
+    def forward(self, x, debug=False):
         """
         Forward pass of the classifier.
 
@@ -121,9 +139,11 @@ class DielemanClassifier(nn.Module):
         Returns:
             torch.Tensor: Output of the classifier. Dimensions: batch x classes
         """
-        x = self.backbone(x)
+        x = self.backbone(x, debug=debug)
+        _print_if_debug(x, debug)
         if self.time_summarizer is not None:
             x = self.time_summarizer(x)
         x = x.mean(dim=1)  # Average pooling over time dimension
         x = x.squeeze(1)  # Remove the time dimension
+        _print_if_debug(x, debug)
         return self.fc(x)
