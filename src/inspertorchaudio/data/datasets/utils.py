@@ -9,30 +9,31 @@ import torch.nn.functional as Fnn
 import torchaudio.functional as F
 import torchaudio
 
+
 class AudioLoader:
     # Utility class to load and preprocess audio files
-    
+
     def __init__(
         self,
         target_length_seconds: float = 3.0,
         target_sample_rate: int = 16000,
         normalize: bool = True,
-        mono: bool = True,
+        convert_to_mono: bool = True,
         lowpass_filter_width: int = 6,
     ):
         self.target_sample_rate = target_sample_rate
         self.normalize = normalize
-        self.mono = mono
+        self.convert_to_mono = convert_to_mono
         self.target_length_seconds = target_length_seconds
         self.lowpass_filter_width = lowpass_filter_width
 
     def __call__(self, file_path: Path) -> tuple[torch.Tensor, int] | None:
-        audio_tensor, sample_rate = load_sample_and_to_mono(
+        audio_tensor, sample_rate = load_sample_and_convert_to_mono(
             file_path,
             length_seconds=self.target_length_seconds,
-            to_mono=self.mono,
+            to_mono=self.convert_to_mono,
         )
-        
+
         if audio_tensor is None:
             raise ValueError(f'Failed to load audio file: {file_path}')
 
@@ -44,8 +45,8 @@ class AudioLoader:
                 lowpass_filter_width=self.lowpass_filter_width,
             )
             sample_rate = self.target_sample_rate
-            
-        if self.target_length_seconds is not None:            
+
+        if self.target_length_seconds is not None:
             audio_tensor = resize(
                 audio_tensor,
                 sample_rate=self.target_sample_rate,
@@ -65,7 +66,6 @@ def resize(
     sample_rate: int,
     target_length_seconds: float,
 ) -> torch.Tensor:
-    
     target_length = int(target_length_seconds * sample_rate)
     if target_length is not None:
         if audio_tensor.size(0) < target_length:
@@ -83,35 +83,49 @@ def resize(
     return audio_tensor
 
 
-def load_sample_and_to_mono(
+def load_sample_and_convert_to_mono(
     file_path: Path,
     length_seconds: float,
     to_mono: bool = True,
+    avoid_ends: float = 5.0,  # Avoids this amount of seconds at start and end
 ) -> tuple[torch.Tensor, int]:
     # Sample a random part of the audio file
     if length_seconds <= 0:
         raise ValueError('length_seconds must be positive.')
 
-    n_samples = audiofile.samples(file_path)
-    sample_rate = audiofile.sampling_rate(file_path)
+    info = torchaudio.info(file_path, backend='soundfile')
+    n_samples = info.num_frames
+    sample_rate = info.sample_rate
     n_samples_to_load = int(length_seconds * sample_rate)
 
     if n_samples_to_load > n_samples:
         n_samples_to_load = n_samples
 
-    start_sample = torch.randint(0, n_samples - n_samples_to_load + 1, (1,)).item()
-
+    avoid_ends_samples = int(avoid_ends * sample_rate)
+    start_sample = torch.randint(
+        avoid_ends_samples,
+        2 * n_samples // 3 - n_samples_to_load - avoid_ends_samples - 1,
+        (1,),
+    ).item()
+    
+    start_sample = int(start_sample)
 
     waveform, sample_rate = torchaudio.load(
         file_path,
+        backend='soundfile',
         frame_offset=start_sample,
         num_frames=n_samples_to_load,
-        backend='soundfile',
     )
-    
-    if waveform.shape[-1] < 44100:
-        raise ValueError(f'Audio file {file_path} is too short!')
-  
+
+    if waveform.shape[-1] < n_samples_to_load:
+        message = f"""Audio file {file_path} is too short!
+        ({waveform.shape[-1]} samples)
+        File has {n_samples} samples,
+        requested length is {n_samples_to_load} samples,
+        starting at sample {start_sample}.
+        Info: {info}"""
+        raise ValueError(message)
+
     if to_mono and waveform.shape[0] > 1:
         waveform = torch.mean(waveform, dim=0)
     return waveform.squeeze(0), sample_rate
@@ -124,5 +138,3 @@ def file_loader(file_path: Path) -> tuple[torch.Tensor, int] | None:
         logging.error('Error reading file %s: %s', file_path, e)
         return None
     return torch.from_numpy(data).float(), sample_rate
-
-

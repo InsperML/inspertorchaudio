@@ -15,24 +15,32 @@ from .utils import AudioLoader
 from sklearn.preprocessing import LabelEncoder
 
 BLACKLIST = set([
-    '11769',
-    '11776',
-    '011791',
-    '11763',
-    '20432',
-    '10577',
-    '10376',
-    '16878',
-    '16879',
-    '1929',
-    '26174',
-    '16880', 
-    '11794',
-    '17782',
-    '11787',
-    '27673',
-    '26169',
-    '11803',
+    '108925',
+    '113016',
+    '113017',
+    '113018', 
+    '113019',
+    '113020',
+    # '11769',
+    # '11776',
+    # '011791',
+    # '11763',
+    # '20432',
+    # '10577',
+    # '10376',
+    # '16878',
+    # '16879',
+    # '1929',
+    # '26174',
+    # '16880', 
+    # '11794',
+    # '17782',
+    # '11787',
+    # '27673',
+    # '26169',
+    # '11803',
+    # '11793',
+    # '11764',
 ])
 
 
@@ -47,8 +55,8 @@ def load_and_preprocess_tracks_csv(tracks_csv_path: Path | str) -> pd.DataFrame:
     return df
 
 
-def make_filename(track_id: int) -> tuple[Path, Path]:
-    track_filename = f'{track_id:06d}.mp3'
+def make_filename(track_id: int, extension : str = 'wav') -> tuple[Path, Path]:
+    track_filename = f'{track_id:06d}.{extension}'
     track_dir = track_filename[:3]
     return Path(track_dir), Path(track_filename)
 
@@ -59,6 +67,7 @@ def fma_dataset(
     sample_length_seconds: float = 5.0,
     target_sample_rate: int = 16000,
     subset: Literal['small', 'medium', 'large'] = 'small',
+    check_dataset_files:  bool = False,
 ):
     df = load_and_preprocess_tracks_csv(tracks_csv_full_path)
     df = df[df['subset'] == subset]
@@ -88,7 +97,7 @@ def fma_dataset(
         target_length_seconds=sample_length_seconds,
         target_sample_rate=target_sample_rate,
         normalize=True,
-        mono=True,
+        convert_to_mono=True,
         lowpass_filter_width=6,
     )
 
@@ -106,12 +115,13 @@ def fma_dataset(
         dataset_index=list(zip(df_test['fullpath'], df_test['genre'])),
         loading_pipeline=audio_loader,
     )
-
-    print('Checking training dataset files...')
-    train_dataset.check_if_files_exist()
-    print('Checking validation dataset files...')
-    val_dataset.check_if_files_exist()
-    print('Checking test dataset files...')
-    test_dataset.check_if_files_exist()
+    
+    if check_dataset_files:
+        print('Checking training dataset files...')
+        train_dataset.check_if_files_exist()
+        print('Checking validation dataset files...')
+        val_dataset.check_if_files_exist()
+        print('Checking test dataset files...')
+        test_dataset.check_if_files_exist()
 
     return train_dataset, val_dataset, test_dataset, label_encoder

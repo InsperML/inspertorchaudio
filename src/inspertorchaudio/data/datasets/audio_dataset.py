@@ -4,6 +4,12 @@ from joblib import Parallel, delayed
 import torch
 from torch.utils.data import Dataset
 from tqdm import tqdm
+import torchaudio
+
+import warnings
+warnings.filterwarnings("ignore", module="libmpg123")
+
+
 
 
 class AudioFileDataset(Dataset):
@@ -30,9 +36,21 @@ class AudioFileDataset(Dataset):
             file_path, i = item
             if not file_path.exists():
                 return None
-
-            if file_path.stat().st_size <= 2 * 1024 * 1024:  # skip files <= 2 MiB
+            
+            info = torchaudio.info(file_path, backend='soundfile')
+            #print(info)
+            if info.num_frames < info.sample_rate:  # skip files shorter than 1 second
                 return None
+            try:
+                _ = self.__getitem__(
+                    i
+                )
+            except Exception:
+                print(f'Error loading file: {file_path}')
+                return None
+            #if info.encoding == 'UNKNOWN':  # skip files with unknown encoding  
+            #    return None
+            
             # except Exception:
             #     return None
             # try:
@@ -62,8 +80,11 @@ class AudioFileDataset(Dataset):
     def __getitem__(self, index: int) -> tuple[torch.Tensor, int]:
         file_path, label_index = self.dataset_items[index]
 
-        audio_tensor = self.loading_pipeline(file_path)
-        if audio_tensor is None:
-            raise ValueError(f'Failed to load audio file: {file_path}')
+        try:
+            audio_tensor = self.loading_pipeline(file_path)
+            if audio_tensor is None:
+                raise ValueError(f'Failed to load audio file: {file_path}')
+        except Exception as e:
+            raise ValueError(f'Error loading audio file {file_path}: {e}')
 
         return audio_tensor, label_index

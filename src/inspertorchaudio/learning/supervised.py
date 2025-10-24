@@ -81,7 +81,7 @@ def train(
     if use_cuda == 'auto':
         device_type = next(model.parameters()).device.type
         use_cuda = device_type == 'cuda'
-    elif isinstance(use_cuda, bool):
+    elif not isinstance(use_cuda, bool):
         raise ValueError(
             'use_cuda must be "auto", True, or False. '
             f'Got {use_cuda} instead.'
@@ -131,7 +131,7 @@ def train(
             )
             mlflow.pytorch.log_model(
                 model,
-                'best_model',
+                name='best_model',
                 registered_model_name=model_name,
                 signature=signature,
             )
