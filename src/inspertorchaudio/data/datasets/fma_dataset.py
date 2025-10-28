@@ -1,47 +1,42 @@
-from functools import partial
 from pathlib import Path
-import audiofile
-import pandas as pd
 from typing import Literal
 
-import torch
-import torch.nn.functional as Fnn
-import torchaudio
-import torchaudio.functional as F
+import pandas as pd
+from sklearn.preprocessing import LabelEncoder
 
 from .audio_dataset import AudioFileDataset
 from .utils import AudioLoader
 
-from sklearn.preprocessing import LabelEncoder
-
-BLACKLIST = set([
-    '108925',
-    '113016',
-    '113017',
-    '113018', 
-    '113019',
-    '113020',
-    # '11769',
-    # '11776',
-    # '011791',
-    # '11763',
-    # '20432',
-    # '10577',
-    # '10376',
-    # '16878',
-    # '16879',
-    # '1929',
-    # '26174',
-    # '16880', 
-    # '11794',
-    # '17782',
-    # '11787',
-    # '27673',
-    # '26169',
-    # '11803',
-    # '11793',
-    # '11764',
-])
+BLACKLIST = set(
+    [
+        '108925',
+        '113016',
+        '113017',
+        '113018',
+        '113019',
+        '113020',
+        # '11769',
+        # '11776',
+        # '011791',
+        # '11763',
+        # '20432',
+        # '10577',
+        # '10376',
+        # '16878',
+        # '16879',
+        # '1929',
+        # '26174',
+        # '16880',
+        # '11794',
+        # '17782',
+        # '11787',
+        # '27673',
+        # '26169',
+        # '11803',
+        # '11793',
+        # '11764',
+    ]
+)
 
 
 def load_and_preprocess_tracks_csv(tracks_csv_path: Path | str) -> pd.DataFrame:
@@ -55,7 +50,7 @@ def load_and_preprocess_tracks_csv(tracks_csv_path: Path | str) -> pd.DataFrame:
     return df
 
 
-def make_filename(track_id: int, extension : str = 'wav') -> tuple[Path, Path]:
+def make_filename(track_id: int, extension: str = 'wav') -> tuple[Path, Path]:
     track_filename = f'{track_id:06d}.{extension}'
     track_dir = track_filename[:3]
     return Path(track_dir), Path(track_filename)
@@ -67,16 +62,16 @@ def fma_dataset(
     sample_length_seconds: float = 5.0,
     target_sample_rate: int = 16000,
     subset: Literal['small', 'medium', 'large'] = 'small',
-    check_dataset_files:  bool = False,
+    check_dataset_files: bool = False,
 ):
     df = load_and_preprocess_tracks_csv(tracks_csv_full_path)
     all_subsets = {
-        'small' : ['small'],
-        'medium' : ['medium', 'small'],
-        'large' : ['large', 'medium', 'small'],
+        'small': ['small'],
+        'medium': ['medium', 'small'],
+        'large': ['large', 'medium', 'small'],
     }[subset]
     df = df[df['subset'].isin(all_subsets)]
-    
+
     blacklist_filter = ~df.index.astype(str).isin(BLACKLIST)
     df = df[blacklist_filter]
 
@@ -120,7 +115,7 @@ def fma_dataset(
         dataset_index=list(zip(df_test['fullpath'], df_test['genre'])),
         loading_pipeline=audio_loader,
     )
-    
+
     if check_dataset_files:
         print('Checking training dataset files...')
         train_dataset.check_if_files_exist()

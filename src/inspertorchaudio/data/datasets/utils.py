@@ -1,13 +1,11 @@
 import logging
 from pathlib import Path
 
-import audiofile
 import soundfile as sf
 import torch
-import torch.nn as nn
 import torch.nn.functional as Fnn
-import torchaudio.functional as F
 import torchaudio
+import torchaudio.functional as F
 
 
 class AudioLoader:
@@ -27,7 +25,7 @@ class AudioLoader:
         self.target_length_seconds = target_length_seconds
         self.lowpass_filter_width = lowpass_filter_width
 
-    def __call__(self, file_path: Path) -> tuple[torch.Tensor, int] | None:
+    def __call__(self, file_path: Path) -> torch.Tensor | None:
         audio_tensor, sample_rate = load_sample_and_convert_to_mono(
             file_path,
             length_seconds=self.target_length_seconds,
@@ -54,9 +52,9 @@ class AudioLoader:
             )
 
         if self.normalize:
-            audio_tensor = (audio_tensor - audio_tensor.mean()) / (
-                audio_tensor.std() + 1e-9
-            )
+            audio_tensor_mean = audio_tensor.mean()
+            audio_tensor_std = audio_tensor.std() + 1e-9
+            audio_tensor = (audio_tensor - audio_tensor_mean) / audio_tensor_std
 
         return audio_tensor
 
@@ -87,31 +85,47 @@ def load_sample_and_convert_to_mono(
     file_path: Path,
     length_seconds: float,
     to_mono: bool = True,
-    avoid_ends: float = 2.0,  # Avoids this amount of seconds at start and end
+    avoid_ends: float = 2.0,
 ) -> tuple[torch.Tensor, int]:
-    # Sample a random part of the audio file
+    """Loads a sample of specified length from an audio file, optionally converting it to mono.
+
+    Args:
+        file_path: Path to the audio file.
+        length_seconds: Length of the audio sample to load in seconds.
+        to_mono: Whether to convert the audio to mono.
+        avoid_ends: Amount of seconds to avoid at the start and end of the audio file.
+
+    Returns:
+        A tuple containing the audio tensor and the sample rate.
+    """
     if length_seconds <= 0:
         raise ValueError('length_seconds must be positive.')
 
+    # Sample a random part of the audio file
     info = torchaudio.info(file_path, backend='soundfile')
+
     n_samples = info.num_frames
     sample_rate = info.sample_rate
+
     n_samples_to_load = int(length_seconds * sample_rate)
 
-    if n_samples_to_load > n_samples - 2* int(avoid_ends * sample_rate):
-        n_samples_to_load = n_samples
+    n_samples_to_avoid = int(avoid_ends * sample_rate)
+    if n_samples <= 2 * n_samples_to_avoid:
+        raise ValueError(
+            f'Audio file {file_path} is too short '
+            f'to avoid {avoid_ends} seconds at start and end.'
+        )
 
-    avoid_ends_samples = int(avoid_ends * sample_rate)
-    r0 = avoid_ends_samples
-    r1 = n_samples - n_samples_to_load - avoid_ends_samples - 1
-    if r1 <= r0:
-        raise ValueError(f"Audio file {file_path} is too short to sample {n_samples_to_load} samples while avoiding {avoid_ends} seconds at start and end.")
-    start_sample = torch.randint(
-        r0, r1,
-        (1,),
-    ).item()
-    
-    start_sample = int(start_sample)
+    available_samples = n_samples - 2 * n_samples_to_avoid
+    if available_samples <= n_samples_to_load:
+        raise ValueError(
+            f'Audio file {file_path} is too short to load {n_samples_to_load} samples '
+            f'and avoid {avoid_ends} seconds at start and end.'
+        )
+
+    lowest_start = n_samples_to_avoid
+    highest_start = n_samples - (n_samples_to_load + n_samples_to_avoid) - 1
+    start_sample = int(torch.randint(lowest_start, highest_start, (1,)).item())
 
     waveform, sample_rate = torchaudio.load(
         file_path,
@@ -121,17 +135,18 @@ def load_sample_and_convert_to_mono(
     )
 
     if waveform.shape[-1] < n_samples_to_load:
-        message = f"""Audio file {file_path} is too short!
-        ({waveform.shape[-1]} samples)
-        File has {n_samples} samples,
-        requested length is {n_samples_to_load} samples,
-        starting at sample {start_sample}.
-        Info: {info}"""
-        raise ValueError(message)
+        raise ValueError(
+            f'Audio file {file_path} is too short: {waveform.shape[-1]} samples. '
+            f'File has {n_samples} samples, requested length is {n_samples_to_load} '
+            f'samples, starting at sample {start_sample}. Info: {info}'
+        )
 
     if to_mono and waveform.shape[0] > 1:
         waveform = torch.mean(waveform, dim=0)
-    return waveform.squeeze(0), sample_rate
+
+    waveform = waveform.squeeze()
+
+    return waveform, sample_rate
 
 
 def file_loader(file_path: Path) -> tuple[torch.Tensor, int] | None:

@@ -1,15 +1,13 @@
+import warnings
 from collections.abc import Callable
 from pathlib import Path
-from joblib import Parallel, delayed
+
 import torch
+import torchaudio
 from torch.utils.data import Dataset
 from tqdm import tqdm
-import torchaudio
 
-import warnings
-warnings.filterwarnings("ignore", module="libmpg123")
-
-
+warnings.filterwarnings('ignore', module='libmpg123')
 
 
 class AudioFileDataset(Dataset):
@@ -19,8 +17,9 @@ class AudioFileDataset(Dataset):
         loading_pipeline: Callable[[Path], torch.Tensor],
     ) -> None:
         """
-        dataset_index: (audio_file_path, label_index)
-        loading_pipeline: function that takes (file_path, target_sample_rate) and returns audio_tensor
+        Args:
+            dataset_index: list of tuples (audio_file_path, label_index)
+            loading_pipeline: function (file_path) -> audio_tensor
         """
 
         self.dataset_items = dataset_index
@@ -29,62 +28,45 @@ class AudioFileDataset(Dataset):
     def __len__(self) -> int:
         return len(self.dataset_items)
 
-    def check_if_files_exist(self, n_jobs=-1) -> None:
-        existing_dataset_items = []
-
-        def _check_item(item):
-            file_path, i = item
+    def check_if_files_exist(self) -> None:
+        def check_item(file_path: Path, item_index: int) -> bool:
             if not file_path.exists():
-                return None
-            
+                return False
+
             info = torchaudio.info(file_path, backend='soundfile')
-            #print(info)
-            if info.num_frames < info.sample_rate:  # skip files shorter than 1 second
-                return None
+            if info.num_frames < info.sample_rate:
+                # skip files shorter than 1 second
+                return False
+
             try:
-                _ = self.__getitem__(
-                    i
-                )
+                _ = self.__getitem__(item_index)
             except ValueError:
                 print(f'Error loading file: {file_path}')
-                return None
-            #if info.encoding == 'UNKNOWN':  # skip files with unknown encoding  
-            #    return None
-            
-            # except Exception:
-            #     return None
-            # try:
-            #     _ = self.loading_pipeline(file_path)
-            # except Exception:
-            #     return None
-            return (file_path, i)
+                return False
 
-        existing_dataset_items = []
-        
-        for i in tqdm(range(len(self.dataset_items))):
-            validated_item = self.dataset_items[i]
-            if _check_item(validated_item) is not None:
-                 existing_dataset_items.append(validated_item)   
-            
-        # results = tqdm(
-        #     Parallel(n_jobs=n_jobs, backend='threading')(
-        #         delayed(_check_item)(i) for i in self.dataset_items
-        #     )
-        # )
-        # for r in results:
-        #     if r is not None:
-        #         existing_dataset_items.append(r)
+            return True
 
-        self.dataset_items = existing_dataset_items
+        def filter_valid_items() -> list[tuple[Path, int]]:
+            valid_dataset_items: list[tuple[Path, int]] = []
+            for dataset_item in tqdm(
+                self.dataset_items,
+                desc='Checking audio files existence',
+            ):
+                if check_item(*dataset_item):
+                    valid_dataset_items.append(dataset_item)
+            return valid_dataset_items
+
+        self.dataset_items = filter_valid_items()
 
     def __getitem__(self, index: int) -> tuple[torch.Tensor, int]:
         file_path, label_index = self.dataset_items[index]
 
         try:
             audio_tensor = self.loading_pipeline(file_path)
-            if audio_tensor is None:
-                raise ValueError(f'Failed to load audio file: {file_path}')
         except Exception as e:
             raise ValueError(f'Error loading audio file {file_path}: {e}')
+
+        if audio_tensor is None:
+            raise ValueError(f'Failed to load audio file: {file_path}')
 
         return audio_tensor, label_index
