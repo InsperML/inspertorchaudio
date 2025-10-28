@@ -37,7 +37,7 @@ class AudioLoader:
         if audio_tensor is None:
             raise ValueError(f'Failed to load audio file: {file_path}')
 
-        if self.target_sample_rate is not None:
+        if self.target_sample_rate is not None and sample_rate != self.target_sample_rate:
             F.resample(
                 audio_tensor,
                 orig_freq=sample_rate,
