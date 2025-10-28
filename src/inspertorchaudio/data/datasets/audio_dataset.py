@@ -45,7 +45,7 @@ class AudioFileDataset(Dataset):
                 _ = self.__getitem__(
                     i
                 )
-            except Exception:
+            except ValueError:
                 print(f'Error loading file: {file_path}')
                 return None
             #if info.encoding == 'UNKNOWN':  # skip files with unknown encoding  

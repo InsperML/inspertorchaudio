@@ -87,7 +87,7 @@ def load_sample_and_convert_to_mono(
     file_path: Path,
     length_seconds: float,
     to_mono: bool = True,
-    avoid_ends: float = 5.0,  # Avoids this amount of seconds at start and end
+    avoid_ends: float = 2.0,  # Avoids this amount of seconds at start and end
 ) -> tuple[torch.Tensor, int]:
     # Sample a random part of the audio file
     if length_seconds <= 0:
@@ -98,13 +98,16 @@ def load_sample_and_convert_to_mono(
     sample_rate = info.sample_rate
     n_samples_to_load = int(length_seconds * sample_rate)
 
-    if n_samples_to_load > n_samples:
+    if n_samples_to_load > n_samples - 2* int(avoid_ends * sample_rate):
         n_samples_to_load = n_samples
 
     avoid_ends_samples = int(avoid_ends * sample_rate)
+    r0 = avoid_ends_samples
+    r1 = n_samples - n_samples_to_load - avoid_ends_samples - 1
+    if r1 <= r0:
+        raise ValueError(f"Audio file {file_path} is too short to sample {n_samples_to_load} samples while avoiding {avoid_ends} seconds at start and end.")
     start_sample = torch.randint(
-        avoid_ends_samples,
-        2 * n_samples // 3 - n_samples_to_load - avoid_ends_samples - 1,
+        r0, r1,
         (1,),
     ).item()
     
