@@ -1,6 +1,7 @@
 import logging
 from pathlib import Path
 
+import scipy
 import soundfile as sf
 import torch
 import torch.nn.functional as Fnn
@@ -102,10 +103,10 @@ def load_sample_and_convert_to_mono(
         raise ValueError('length_seconds must be positive.')
 
     # Sample a random part of the audio file
-    info = torchaudio.info(file_path, backend='soundfile')
+    info = sf.info(file_path)
 
-    n_samples = info.num_frames
-    sample_rate = info.sample_rate
+    n_samples = info.frames
+    sample_rate = info.samplerate
 
     n_samples_to_load = int(length_seconds * sample_rate)
 
@@ -126,13 +127,22 @@ def load_sample_and_convert_to_mono(
     lowest_start = n_samples_to_avoid
     highest_start = n_samples - (n_samples_to_load + n_samples_to_avoid) - 1
     start_sample = int(torch.randint(lowest_start, highest_start, (1,)).item())
+    try:
+#        sample_rate, waveform = scipy.io.wavfile.read(file_path)
+        waveform, sample_rate = sf.read(
+            file_path,
+            start=start_sample,
+            frames=n_samples_to_load,
+            always_2d=True,
+            dtype='float32',
+        )
+    except sf.LibsndfileError as e:
+        raise ValueError(f'Error when reading wavfile {file_path}: {e}')
 
-    waveform, sample_rate = torchaudio.load(
-        file_path,
-        backend='soundfile',
-        frame_offset=start_sample,
-        num_frames=n_samples_to_load,
-    )
+    if waveform.ndim > 1:
+        waveform = waveform[:, 0]
+    #waveform = waveform[start_sample:start_sample+n_samples_to_load]
+    waveform = torch.from_numpy(waveform).float()
 
     if waveform.shape[-1] < n_samples_to_load:
         raise ValueError(
@@ -141,10 +151,13 @@ def load_sample_and_convert_to_mono(
             f'samples, starting at sample {start_sample}. Info: {info}'
         )
 
-    if to_mono and waveform.shape[0] > 1:
-        waveform = torch.mean(waveform, dim=0)
+    try:
+        if to_mono and len(waveform.shape) > 1 and waveform.shape[1] > 1:
+            waveform = torch.mean(waveform, dim=1)
 
-    waveform = waveform.squeeze()
+        waveform = waveform.squeeze()
+    except Exception as e:
+        raise ValueError(f'Error processing waveform from file {file_path}: {e}')
 
     return waveform, sample_rate
 

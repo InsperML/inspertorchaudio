@@ -1,7 +1,7 @@
 import warnings
 from collections.abc import Callable
 from pathlib import Path
-
+import soundfile as sf
 import torch
 import torchaudio
 from torch.utils.data import Dataset
@@ -33,15 +33,16 @@ class AudioFileDataset(Dataset):
             if not file_path.exists():
                 return False
 
-            info = torchaudio.info(file_path, backend='soundfile')
-            if info.num_frames < info.sample_rate:
+            info = sf.info(file_path)
+            if info.frames < info.samplerate:
                 # skip files shorter than 1 second
                 return False
 
             try:
                 _ = self.__getitem__(item_index)
-            except ValueError:
+            except ValueError as v:
                 print(f'Error loading file: {file_path}')
+                print(f'Raised: {v}')
                 return False
 
             return True
@@ -67,6 +68,6 @@ class AudioFileDataset(Dataset):
             raise ValueError(f'Error loading audio file {file_path}: {e}')
 
         if audio_tensor is None:
-            raise ValueError(f'Failed to load audio file: {file_path}')
+            raise ValueError(f'Failed to load audio file: {file_path} - loading pipeline returned None.')
 
         return audio_tensor, label_index
